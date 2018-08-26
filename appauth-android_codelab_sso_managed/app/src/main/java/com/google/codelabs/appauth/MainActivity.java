@@ -186,7 +186,7 @@ public class MainActivity extends AppCompatActivity {
     AuthorizationException error = AuthorizationException.fromIntent(intent);
     final AuthState authState = new AuthState(response, error);
     if (response != null) {
-      Log.i(LOG_TAG, String.format("Handled Authorization Response %s ", authState.toJsonString()));
+      Log.i(LOG_TAG, String.format("Handled Authorization Response %s ", authState.jsonSerializeString()));
       AuthorizationService service = new AuthorizationService(this);
       service.performTokenRequest(response.createTokenExchangeRequest(), new AuthorizationService.TokenResponseCallback() {
         @Override
@@ -207,7 +207,7 @@ public class MainActivity extends AppCompatActivity {
 
   private void persistAuthState(@NonNull AuthState authState) {
     getSharedPreferences(SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE).edit()
-        .putString(AUTH_STATE, authState.toJsonString())
+        .putString(AUTH_STATE, authState.jsonSerializeString())
         .commit();
     enablePostAuthorizationFlows();
   }
@@ -225,7 +225,7 @@ public class MainActivity extends AppCompatActivity {
         .getString(AUTH_STATE, null);
     if (!TextUtils.isEmpty(jsonString)) {
       try {
-        return AuthState.fromJson(jsonString);
+        return AuthState.jsonDeserialize(jsonString);
       } catch (JSONException jsonException) {
         // should never happen
       }
@@ -256,7 +256,7 @@ public class MainActivity extends AppCompatActivity {
       AuthorizationRequest.Builder builder = new AuthorizationRequest.Builder(
           serviceConfiguration,
           clientId,
-          AuthorizationRequest.RESPONSE_TYPE_CODE,
+          AuthorizationRequest.CODE_CHALLENGE_METHOD_S256,
           redirectUri
       );
       builder.setScopes("profile");
@@ -338,7 +338,7 @@ public class MainActivity extends AppCompatActivity {
                 String familyName = userInfo.optString("family_name", null);
                 String imageUrl = userInfo.optString("picture", null);
                 if (!TextUtils.isEmpty(imageUrl)) {
-                  Picasso.with(mMainActivity)
+                  Picasso.get()
                       .load(imageUrl)
                       .placeholder(R.drawable.ic_account_circle_black_48dp)
                       .into(mMainActivity.mProfileView);
